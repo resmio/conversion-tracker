@@ -1,6 +1,6 @@
 /*!
  * ===========================================
- * General Conversion Tracking v1.0
+ * General Conversion Tracking v1.1
  * Copyright 2017 resmio GmbH (Philipp Sahner)
  * ===========================================
  */
@@ -15,10 +15,9 @@
     // get the url, check it for parameters and update the links
  	  var url = window.location.href,
         obj = getAllUrlParams(url);
-        isGclid = false;
-        isObj = false;
-    if (!($.isEmptyObject(obj))) {
-      isObj = true;
+        hasGclidParam = false;
+        isObject = (!($.isEmptyObject(obj)));
+    if (isObject) {
       // create the cookies for the parameters
       $.each( obj, function( key, value ) {
         var current_value = readCookie(key),
@@ -27,17 +26,16 @@
           createCookie(key, value, 90);
         }
         if (key == 'gclid') {
-          isGclid = true;
+          hasGclidParam = true;
         }
       });
     }
     // no gclid parameter but gclid cookie
     // than add it to the parameters/links
-    if (isGclid == false) {
+    if (hasGclidParam == false) {
       // check cookies for gclid and add it to object if it is there
       var gclidValue = readCookie('gclid');
       if (gclidValue != '') {
-        // obj['gclid'].push(gclidValue);
         obj['gclid'] = gclidValue;
       }
     }
@@ -51,11 +49,11 @@
    */
 
   /*
-   * Get all the parameters of an URL as object (array)
-   * --------------------------------------------------
+   * Get all the parameters of an URL as object
+   * ------------------------------------------
    */
   function getAllUrlParams(url) {
-    // get query string from url (optional) or window
+    // get query string from url (optional) or window (and only keep the parameter part)
     var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
     // variable (object) which stores the parameters
     var obj = {};
@@ -64,12 +62,12 @@
       // stuff after # is not part of query string, so get rid of it
       queryString = queryString.split('#')[0];
       // split our query string into its component parts
-      var arr = queryString.split('&');
-      for (var i=0; i<arr.length; i++) {
+      var paramArray = queryString.split('&');
+      for (var i=0; i<paramArray.length; i++) {
         // separate the keys and the values
-        var a = arr[i].split('=');
-        // in case params look like: list[]=thing1&list[]=thing2
-        var paramNum = undefined;
+        var a = paramArray[i].split('=');
+        // in case params look like: list[]=thing1&list[]=thing2 than we have to get rid of "[]" and a possible index number inside brackets
+        var paramNum;
         var paramName = a[0].replace(/\[\d*\]/, function(v) {
           paramNum = v.slice(1,-1);
           return '';
@@ -110,18 +108,15 @@
    * -------------------
    */
   function createCookie(name,value,days) {
-    // check if cookie already exists -> disabled
-    /*if (document.cookie.indexOf(name < 0) {*/
-      if (days) {
-        var date = new Date();
-        date.setTime(date.getTime()+(days*24*60*60*1000));
-        var expires = "; expires="+date.toGMTString();
-      }
-      else {
-        var expires = "";
-      }
-      document.cookie = name+"="+value+expires+"; path=/";
-    /*}*/
+    if (days) {
+      var date = new Date();
+      date.setTime(date.getTime()+(days*24*60*60*1000));
+      var expires = "; expires="+date.toGMTString();
+    }
+    else {
+      var expires = "";
+    }
+    document.cookie = name+"="+value+expires+"; path=/";
   }
 
   /*
@@ -144,7 +139,9 @@
    * -------------------------
    */
   function eraseCookie(name) {
-    createCookie(name,"",-1);
+    // old solution: createCookie(name,"",-1);
+    // new solution:
+    document.cookie = name+"=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/";
   }
 
   /*
@@ -153,16 +150,12 @@
    */
   function updateLinks(url, obj) {
     var pathArray = url.split( '/'),
-        // pathArray = window.location.href.split( '/'),
         protocol = pathArray[0],
         host = pathArray[2],
         baseUrl = protocol + '//' + host,
         theUrl = url.split('?')[0],
         params = '',
         counter = 0,
-        // url = window.location.href.split('?')[0],
-        // params = obj,
-        // params = window.location.href.split('?')[1],
         noParams = true,
         links = $("a[href^='"+baseUrl+"'], a[href^='/'], a[href^='./'], a[href^='../'], a[href^='#']");
     $.each( obj, function( key, value ) {
@@ -175,15 +168,11 @@
         counter = counter + 1;
       }
     });
-    // if (url != params) {
     if (theUrl != params) {
       noParams = false;
       links.each(function(){
-        console.log('updating the links:');
         var hrefTemp = $(this).attr("href");
         hrefTemp = hrefTemp.split('?')[0];
-        console.log(hrefTemp);
-        console.log(params);
         $(this).attr("href", hrefTemp + params);
       });
     }
