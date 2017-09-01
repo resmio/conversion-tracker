@@ -12,14 +12,14 @@
  */
 window.onload = function(){
   // get the url, check it for parameters and update the links
-	  var url = window.location.href,
-      obj = getAllUrlParams(url);
-      hasGclidParam = false;
+  var url = window.location.href,
+      obj = getAllUrlParams(url),
+      hasGclidParam = false,
       isObject = Object.keys(obj).length !== 0 && obj.constructor === Object;
   if (isObject) {
     // create the cookies for the parameters
     for (var i = 0, len = Object.keys(obj).length; i < len; i++) {
-      var key = Object.keys(obj)[i];
+      var key = Object.keys(obj)[i],
           current_value = readCookie(key),
           value = obj[key].toString().toLowerCase();
       if (value != current_value) {
@@ -67,11 +67,11 @@ function getAllUrlParams(url) {
       // separate the keys and the values
       var a = paramArray[i].split('=');
       // in case params look like: list[]=thing1&list[]=thing2 than we have to get rid of "[]" and a possible index number inside brackets
-      var paramNum;
-      var paramName = a[0].replace(/\[\d*\]/, function(v) {
-        paramNum = v.slice(1,-1);
-        return '';
-      });
+      var paramNum,
+          paramName = a[0].replace(/\[\d*\]/, function(v) {
+            paramNum = v.slice(1,-1);
+            return '';
+          });
       // set parameter value (use 'true' if empty)
       var paramValue = typeof(a[1])==='undefined' ? true : a[1];
       // (optional) keep case consistent
@@ -124,12 +124,16 @@ function createCookie(name,value,days) {
  * ---------------------------------------------
  */
 function readCookie(name) {
-  var nameEQ = name + "=";
-  var ca = document.cookie.split(';');
+  var nameEQ = name + "=",
+      ca = document.cookie.split(';');
   for(var i=0;i < ca.length;i++) {
     var c = ca[i];
-    while (c.charAt(0)==' ') c = c.substring(1,c.length);
-    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    while (c.charAt(0)==' ') {
+      c = c.substring(1,c.length)
+    }
+    if (c.indexOf(nameEQ) == 0) {
+      return c.substring(nameEQ.length,c.length)
+    }
   }
   return null;
 }
@@ -157,7 +161,6 @@ function updateLinks(url, obj) {
       noParams = true,
       pagelinks = document.getElementsByTagName('a');
   for (var i = 0, len = Object.keys(obj).length; i < len; i++) {
-    console.log('going through the parameters');
     var key = Object.keys(obj)[i],
         value = obj[key];
     if (counter == 0) {
